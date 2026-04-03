@@ -1,0 +1,8 @@
+# virtual env
+myvenv
+
+# dotenv
+.env
+
+# node modules
+frontend/node_modules
