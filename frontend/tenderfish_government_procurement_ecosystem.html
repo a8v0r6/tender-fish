@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>TenderFish - Government Procurement Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#00372c",
+                        "primary-container": "#085041",
+                        "on-primary": "#ffffff",
+                        "secondary": "#006a6a",
+                        "secondary-container": "#93f2f2",
+                        "tertiary": "#fbbc00",
+                        "on-tertiary": "#261a00",
+                        "background": "#fbfcfb",
+                        "surface": "#f8faf9",
+                        "outline": "#707975",
+                        "outline-variant": "#bfc9c4",
+                        "surface-container-low": "#f2f4f3",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#404945",
+                        "on-secondary-fixed-variant": "#004f4f",
+                        "tertiary-fixed": "#ffdfa0",
+                        "tertiary-fixed-dim": "#fbbc00",
+                        "on-tertiary-fixed-variant": "#5c4300",
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "8px",
+                        "lg": "8px",
+                        "xl": "12px",
+                        "2xl": "16px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, .serif-heading { font-family: 'Noto Serif', serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .nav-gradient {
+            background: radial-gradient(circle at 100% 0%, #085041 0%, #00372c 100%);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 100% 0%, #f0f4f2 0%, #fbfcfb 50%),
+                        radial-gradient(circle at 0% 100%, #e8eee9 0%, #fbfcfb 50%);
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #085041; }
+        .scrolling-marquee {
+            white-space: nowrap;
+            overflow: hidden;
+            display: inline-block;
+            animation: marquee 40s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+    <div id="root"></div>
+
+    <!-- React, ReactDOM, History, Router, Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Mock Data ---
+        const TENDERS = [
+            { id: 'RJ-901-PWD', title: 'Construction of Multi-Level Parking Facility - Phase II', dept: 'PWD, Maharashtra', value: '12.45 Cr', deadline: 'Oct 14, 2023', match: '94%', category: 'Civil' },
+            { id: 'KA-442-MED', title: 'Smart City Data Dashboard & Analytics Platform', dept: 'IT Dept, Karnataka', value: '8.20 Cr', deadline: 'Oct 28, 2023', match: '78%', category: 'IT' },
+            { id: 'MH-118-WTR', title: 'Solar Rooftop Systems in 50 Districts', dept: 'MNRE', value: '45.00 Cr', deadline: 'Nov 05, 2023', match: '42%', category: 'Energy' }
+        ];
+
+        // --- Components ---
+
+        const TopNavBar = () => {
+            const navigate = useNavigate();
+            return (
+                <nav className="fixed top-0 w-full z-50 glass-nav border-b border-primary/5 flex justify-between items-center px-8 py-4">
+                    <div className="flex items-center gap-12">
+                        <Link to="/" className="text-2xl font-['Noto_Serif'] font-black text-primary tracking-tight">TenderFish</Link>
+                        <div className="hidden md:flex gap-8">
+                            <Link to="/discovery" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Tender Discovery</Link>
+                            <Link to="/application" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Application Helper</Link>
+                            <Link to="/materials" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Raw Materials</Link>
+                            <Link to="/finance" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Finance & Lending</Link>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <button className="p-2 hover:bg-primary/5 transition-all rounded-full relative">
+                            <span className="material-symbols-outlined text-primary text-xl">notifications</span>
+                            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-secondary rounded-full border-2 border-white"></span>
+                        </button>
+                        <div className="flex items-center gap-3 pl-6 border-l border-outline-variant/30">
+                            <span className="font-semibold text-sm text-primary tracking-tight">My Profile</span>
+                            <div className="p-0.5 border-2 border-primary/20 rounded-full">
+                                <img alt="User Avatar" className="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMzdNsQv-G2Qk6ecchAOzLA-44KJ0FHHYdTQlTB21MTzc_Uk-CZ9NUMz3y2PC7HUOx5D6rI1mbfl006zlAnCoSkOlS20cTtzB-fWNwMoF4DKu9H301jPyF5uVGXYT1QBb2Ds7TYiDi3beFge21STj2MuPwps_GvBj9MnI5PlsHeXCFwlwbN5ZLf-29bAbtj9vOcudcO_aD7Mv8eMCay9JDd9dgz4vLIBENQa-YQafXMxqaxE1epWsHZjN7rsef-OOe8C-Q3VHmHrI"/>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        const Sidebar = () => {
+            const location = useLocation();
+            const isActive = (path) => location.pathname === path;
+            
+            return (
+                <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 nav-gradient border-r border-white/10 flex-col z-40 pt-24 shadow-2xl">
+                    <div className="px-8 mb-10">
+                        <h2 className="font-['Noto_Serif'] text-xl font-black text-white tracking-tighter">TenderFish</h2>
+                        <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-black mt-1">Strategic Procurement</p>
+                    </div>
+                    <nav className="flex-grow">
+                        <Link to="/discovery" className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive('/discovery') ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                            <span className="material-symbols-outlined text-lg">search</span> Tender Discovery
+                        </Link>
+                        <Link to="/application" className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive('/application') ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                            <span className="material-symbols-outlined text-lg">edit_note</span> Application Helper
+                        </Link>
+                        <Link to="/bids" className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive('/bids') ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                            <span className="material-symbols-outlined text-lg">gavel</span> Bid Assistance
+                        </Link>
+                        <Link to="/materials" className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive('/materials') ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                            <span className="material-symbols-outlined text-lg">inventory_2</span> Raw Materials
+                        </Link>
+                        <Link to="/finance" className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive('/finance') ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+                            <span className="material-symbols-outlined text-lg">payments</span> Finance & Lending
+                        </Link>
+                    </nav>
+                    <div className="p-8">
+                        <Link to="/application" className="block w-full bg-secondary text-white py-4 rounded-lg font-black text-center text-[10px] uppercase tracking-widest shadow-lg shadow-secondary/20 hover:brightness-110 transition-all">
+                            New Application
+                        </Link>
+                    </div>
+                </aside>
+            );
+        };
+
+        // --- Pages ---
+
+        const HomePage = () => {
+            return (
+                <div className="bg-background min-h-screen">
+                    <TopNavBar />
+                    <main className="pt-32 pb-20 px-8 max-w-7xl mx-auto">
+                        <section className="hero-gradient rounded-3xl p-16 mb-20">
+                            <div className="max-w-2xl">
+                                <h1 className="font-headline text-5xl md:text-7xl text-primary font-black leading-tight mb-8">
+                                    Winning tenders, <br/><span className="text-secondary italic font-medium">simplified.</span>
+                                </h1>
+                                <p className="text-xl text-on-surface-variant mb-12 font-light">
+                                    The precision-engineered tender platform for Indian MSMEs. AI-driven matching discovers high-value contracts before your competition.
+                                </p>
+                                <div className="flex gap-6">
+                                    <Link to="/pricing" className="bg-primary text-white px-10 py-5 rounded-xl font-bold text-lg hover:shadow-xl transition-all">View Plans</Link>
+                                    <Link to="/discovery" className="bg-white text-primary border border-primary/20 px-10 py-5 rounded-xl font-bold text-lg hover:bg-surface transition-all">Explore Tenders</Link>
+                                </div>
+                            </div>
+                        </section>
+
+                        <div className="bg-primary-container text-white py-4 mb-20 rounded-xl overflow-hidden flex">
+                            <div className="scrolling-marquee flex gap-12 items-center">
+                                <span className="flex items-center gap-3"><span className="bg-tertiary text-on-tertiary px-2 py-0.5 text-[10px] font-bold">NEW</span> CPWD: Mumbai Hub | ₹12.4 Cr | <span className="text-secondary-container">12 Days Left</span></span>
+                                <span className="flex items-center gap-3"><span className="bg-tertiary text-on-tertiary px-2 py-0.5 text-[10px] font-bold">NEW</span> NHAI: Maintenance | ₹45.8 Cr | <span className="text-secondary-container">21 Days Left</span></span>
+                                <span className="flex items-center gap-3"><span className="bg-tertiary text-on-tertiary px-2 py-0.5 text-[10px] font-bold">NEW</span> BSNL: Optical Fiber | ₹4.2 Cr | <span className="text-secondary-container">08 Days Left</span></span>
+                            </div>
+                        </div>
+
+                        <div className="grid md:grid-cols-4 gap-12 text-center">
+                            <div><p className="text-4xl font-headline font-black text-primary">48,000+</p><p className="text-xs uppercase font-black text-outline tracking-widest mt-2">Active Tenders</p></div>
+                            <div><p className="text-4xl font-headline font-black text-primary">28</p><p className="text-xs uppercase font-black text-outline tracking-widest mt-2">States</p></div>
+                            <div><p className="text-4xl font-headline font-black text-primary">₹380 Cr</p><p className="text-xs uppercase font-black text-outline tracking-widest mt-2">Won by Users</p></div>
+                            <div><p className="text-4xl font-headline font-black text-primary">4,200+</p><p className="text-xs uppercase font-black text-outline tracking-widest mt-2">Active MSMEs</p></div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const DiscoveryPage = () => {
+            return (
+                <div className="min-h-screen">
+                    <TopNavBar />
+                    <Sidebar />
+                    <main className="lg:ml-64 pt-24 p-8 hero-gradient">
+                        <header className="mb-12">
+                            <h1 className="text-4xl font-black text-primary mb-8 tracking-tight">Tender <span className="text-secondary italic">Discovery</span></h1>
+                            <div className="bg-white/70 backdrop-blur-md p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-xl border border-white/50">
+                                <div className="flex-grow flex items-center px-6 py-4">
+                                    <span className="material-symbols-outlined text-primary/40 mr-4">search</span>
+                                    <input className="w-full bg-transparent border-none focus:ring-0 text-sm font-medium" placeholder="Keywords (e.g. Solar Panels, Road Construction)" type="text"/>
+                                </div>
+                                <div className="md:w-56 border-l border-outline-variant/30 flex items-center px-6">
+                                    <select className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold appearance-none">
+                                        <option>All States</option>
+                                        <option>Maharashtra</option>
+                                        <option>Karnataka</option>
+                                    </select>
+                                </div>
+                                <button className="bg-primary text-white px-10 py-4 rounded-xl font-bold uppercase tracking-widest text-xs hover:brightness-110 shadow-lg shadow-primary/20">Find Tenders</button>
+                            </div>
+                        </header>
+
+                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                            <div className="xl:col-span-8 space-y-6">
+                                {TENDERS.map(tender => (
+                                    <div key={tender.id} className="bg-white rounded-2xl border border-outline-variant/20 p-6 hover:shadow-xl transition-all group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <span className="bg-primary/5 text-primary text-[10px] font-black px-3 py-1 rounded-sm border border-primary/10 uppercase tracking-widest">{tender.category}</span>
+                                                <h3 className="text-2xl font-bold text-primary mt-2 group-hover:text-secondary transition-colors">{tender.title}</h3>
+                                                <p className="text-xs text-outline font-medium mt-1">{tender.dept}</p>
+                                            </div>
+                                            <div className="bg-secondary/5 border border-secondary/20 p-3 rounded-xl text-center">
+                                                <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Match</p>
+                                                <p className="text-2xl font-black text-secondary">{tender.match}</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-6 py-4 border-y border-outline-variant/10 mb-6">
+                                            <div><p className="text-[9px] font-black text-outline uppercase tracking-widest">Value</p><p className="text-lg font-bold text-primary">₹ {tender.value}</p></div>
+                                            <div><p className="text-[9px] font-black text-outline uppercase tracking-widest">Deadline</p><p className="text-sm font-bold text-primary">{tender.deadline}</p></div>
+                                            <div><p className="text-[9px] font-black text-outline uppercase tracking-widest">Tender ID</p><p className="text-sm font-bold text-primary">{tender.id}</p></div>
+                                        </div>
+                                        <div className="flex justify-end gap-4">
+                                            <button className="px-6 py-3 border border-primary/20 text-primary font-black uppercase text-[10px] rounded-lg hover:bg-surface transition-all">Details</button>
+                                            <Link to="/application" className="px-6 py-3 bg-primary text-white font-black uppercase text-[10px] rounded-lg shadow-lg hover:brightness-110">Start Application</Link>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <aside className="xl:col-span-4 space-y-6">
+                                <div className="bg-white p-6 rounded-2xl shadow-lg border border-primary/5">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="w-10 h-10 bg-secondary rounded-xl flex items-center justify-center shadow-lg"><span className="material-symbols-outlined text-white">psychology</span></div>
+                                        <div><p className="font-headline font-bold text-primary">AI Advisor</p><p className="text-[10px] uppercase font-black text-outline tracking-widest">Always Online</p></div>
+                                    </div>
+                                    <div className="bg-surface-container-low p-4 rounded-xl text-sm italic text-on-surface-variant leading-relaxed mb-6">
+                                        "I've found 4 new civil tenders matching your recent work in Maharashtra. The parking facility project has a high 94% win probability."
+                                    </div>
+                                    <button className="w-full bg-primary text-white py-3 rounded-xl font-bold uppercase tracking-widest text-[10px]">Analyze All Match Details</button>
+                                </div>
+                            </aside>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const ApplicationPage = () => {
+            return (
+                <div className="min-h-screen">
+                    <TopNavBar />
+                    <Sidebar />
+                    <main className="lg:ml-64 pt-24 p-8 hero-gradient">
+                        <header className="mb-10 max-w-3xl">
+                            <h1 className="text-4xl font-black text-primary mb-3">Application <span className="text-secondary italic">Helper</span></h1>
+                            <p className="text-lg text-on-surface-variant font-light">Craft compliant, winning technical bids based on your historical data and MSME profile.</p>
+                        </header>
+                        
+                        <div className="bg-white rounded-3xl p-10 shadow-2xl border border-primary/5 max-w-5xl">
+                            <div className="flex items-center justify-between mb-10 pb-6 border-b border-outline-variant/20">
+                                <h2 className="text-2xl font-black text-primary">Company Profile</h2>
+                                <span className="text-outline uppercase text-[10px] font-black tracking-widest">Step 1 of 5</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-outline tracking-widest">Company Name</label>
+                                    <input className="w-full bg-surface p-4 rounded-xl border-outline-variant/30 focus:ring-primary focus:border-primary" placeholder="e.g. Bharat Infrastructure Ltd." />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-outline tracking-widest">Business Type</label>
+                                    <select className="w-full bg-surface p-4 rounded-xl border-outline-variant/30">
+                                        <option>Manufacturing (MSME)</option>
+                                        <option>Services</option>
+                                        <option>Trading</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-outline tracking-widest">Turnover (FY 2023-24)</label>
+                                    <input className="w-full bg-surface p-4 rounded-xl border-outline-variant/30" placeholder="₹ 5,00,00,000" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase text-outline tracking-widest">Tender ID / GEM ID</label>
+                                    <input className="w-full bg-surface p-4 rounded-xl border-outline-variant/30" placeholder="Search active tenders..." />
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <Link to="/bids" className="bg-primary text-white px-10 py-5 rounded-xl font-bold uppercase tracking-widest shadow-xl hover:brightness-110">Continue to Technical Bid</Link>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const BidAssistancePage = () => {
+            return (
+                <div className="min-h-screen">
+                    <TopNavBar />
+                    <Sidebar />
+                    <main className="lg:ml-64 pt-24 p-8 bg-surface-bright">
+                        <header className="mb-10">
+                            <h1 className="text-4xl font-black text-primary mb-3">Bid Assistance <span className="text-secondary italic">Dashboard</span></h1>
+                            <p className="text-on-surface-variant">Monitor live auctions and optimize your bid strategy with AI-driven insights.</p>
+                        </header>
+
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
+                            <h2 className="text-sm font-black uppercase tracking-widest text-red-600">Live Now: Active Auctions</h2>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+                            {TENDERS.slice(0, 2).map(tender => (
+                                <div key={tender.id} className="bg-white rounded-3xl border border-primary/5 shadow-xl overflow-hidden flex flex-col">
+                                    <div className="bg-primary text-white p-4 flex justify-between items-center">
+                                        <span className="text-[10px] font-black uppercase tracking-widest">{tender.id}</span>
+                                        <span className="bg-red-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">04:22 Left</span>
+                                    </div>
+                                    <div className="p-8 flex-grow">
+                                        <h3 className="text-xl font-bold text-primary mb-6">{tender.title}</h3>
+                                        <div className="grid grid-cols-2 gap-4 mb-8">
+                                            <div><p className="text-[9px] font-black text-outline uppercase tracking-widest">Current L1</p><p className="text-2xl font-black text-secondary">₹ 48.2 L</p></div>
+                                            <div><p className="text-[9px] font-black text-outline uppercase tracking-widest">Your Last</p><p className="text-2xl font-black text-primary">₹ 49.5 L</p></div>
+                                        </div>
+                                        <div className="bg-surface-container-low p-3 rounded-xl border border-outline-variant/30 flex justify-between">
+                                            <span className="text-[9px] font-black text-outline uppercase">Gap</span>
+                                            <span className="text-xs font-bold text-red-600">+ ₹1.28L (2.6%)</span>
+                                        </div>
+                                    </div>
+                                    <button className="w-full bg-secondary text-white py-5 font-black uppercase tracking-widest text-[10px] hover:brightness-110">Enter Auction Room</button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="bg-white rounded-3xl border border-primary/5 shadow-2xl p-10">
+                            <h3 className="text-2xl font-black text-primary mb-8">Bid Preparation (BOQ)</h3>
+                            <div className="overflow-x-auto rounded-2xl border border-outline-variant/10">
+                                <table className="w-full text-left">
+                                    <thead className="bg-surface-container-low text-[10px] font-black uppercase tracking-widest text-outline">
+                                        <tr><th className="p-4">Item</th><th className="p-4">Qty</th><th className="p-4">Material</th><th className="p-4">Labor</th><th className="p-4 text-right">Total</th></tr>
+                                    </thead>
+                                    <tbody className="text-sm font-medium">
+                                        <tr className="border-b border-outline-variant/10"><td className="p-4">Earthwork Foundation</td><td className="p-4">450</td><td className="p-4">₹12,000</td><td className="p-4">₹45,000</td><td className="p-4 text-right font-black">₹65,500</td></tr>
+                                        <tr className="border-b border-outline-variant/10"><td className="p-4">Reinforced Concrete M25</td><td className="p-4">120</td><td className="p-4">₹8,40,000</td><td className="p-4">₹1,20,000</td><td className="p-4 text-right font-black">₹10,08,000</td></tr>
+                                    </tbody>
+                                    <tfoot className="bg-primary text-white"><tr className="font-black"><td className="p-4" colSpan="4">ESTIMATED TOTAL</td><td className="p-4 text-right text-lg">₹ 10,73,500</td></tr></tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const RawMaterialsPage = () => {
+            return (
+                <div className="min-h-screen">
+                    <TopNavBar />
+                    <Sidebar />
+                    <main className="lg:ml-64 pt-24 p-8 hero-gradient">
+                        <header className="mb-12">
+                            <h1 className="text-4xl font-black text-primary mb-8 tracking-tight">Raw Material <span className="text-secondary italic">Procurement</span></h1>
+                            <div className="glass-nav p-2 rounded-2xl flex flex-col md:flex-row gap-2 shadow-2xl border border-white/50">
+                                <div className="flex-grow flex items-center px-6 py-4">
+                                    <span className="material-symbols-outlined text-primary/40 mr-4">inventory_2</span>
+                                    <input className="w-full bg-transparent border-none focus:ring-0 text-lg font-medium" placeholder="Search Materials (e.g. TMT Steel)" />
+                                </div>
+                                <button className="bg-primary text-white px-12 py-4 rounded-xl font-black uppercase text-sm tracking-widest">Find Suppliers</button>
+                            </div>
+                        </header>
+                        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+                            <div className="xl:col-span-8 space-y-8">
+                                <div className="bg-white rounded-3xl border border-primary/5 shadow-xl p-8 hover:shadow-2xl transition-all">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-primary">Mahindra Steel Works</h3>
+                                            <p className="text-sm text-outline mt-1">12.4 km • Navi Mumbai</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-outline uppercase tracking-widest">Quote</p>
+                                            <p className="text-3xl font-black text-secondary">₹58,200<span className="text-sm font-medium text-outline">/t</span></p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 mb-8">
+                                        <span className="bg-secondary/5 text-secondary px-3 py-1 rounded-full text-[10px] font-black uppercase">Ready Stock</span>
+                                        <span className="bg-primary/5 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase">MSME Verified</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button className="border border-primary/20 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest text-primary hover:bg-primary/5">Negotiate via AI</button>
+                                        <button className="bg-primary text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Get Firm Quote</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="xl:col-span-4">
+                                <div className="bg-primary rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-secondary/10 rounded-full -mr-12 -mt-12"></div>
+                                    <h3 className="text-2xl font-headline font-bold mb-8">Market Trends</h3>
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between border-b border-white/10 pb-4">
+                                            <span className="text-xs uppercase font-black text-white/50">TMT 500 Grade</span>
+                                            <span className="text-sm font-bold text-secondary-container">↑ 2.4%</span>
+                                        </div>
+                                        <div className="flex justify-between border-b border-white/10 pb-4">
+                                            <span className="text-xs uppercase font-black text-white/50">OPC Cement</span>
+                                            <span className="text-sm font-bold text-secondary-container">↓ 0.8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const FinancePage = () => {
+            return (
+                <div className="min-h-screen">
+                    <TopNavBar />
+                    <Sidebar />
+                    <main className="lg:ml-64 pt-24 p-8 hero-gradient">
+                        <header className="mb-12">
+                            <h1 className="text-4xl font-black text-primary mb-3">Finance & <span className="text-secondary italic">Lending</span></h1>
+                            <p className="text-on-surface-variant font-light text-lg">Fuel your MSME growth with tailored capital solutions.</p>
+                        </header>
+                        <div className="bg-white/70 backdrop-blur-md rounded-3xl p-10 shadow-2xl border border-white/50 grid grid-cols-1 md:grid-cols-3 gap-12">
+                            <div className="md:col-span-2 space-y-12">
+                                <h2 className="text-2xl font-black text-primary">EMI Calculator</h2>
+                                <div className="space-y-8">
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between"><label className="text-[10px] font-black uppercase text-outline">Loan Amount</label><span className="text-2xl font-black text-primary">₹ 45.0 L</span></div>
+                                        <input type="range" className="w-full h-1.5 bg-surface-container-highest rounded-full appearance-none accent-primary" />
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between"><label className="text-[10px] font-black uppercase text-outline">Tenure</label><span className="text-2xl font-black text-primary">24 Months</span></div>
+                                        <input type="range" className="w-full h-1.5 bg-surface-container-highest rounded-full appearance-none accent-primary" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-primary rounded-3xl p-10 flex flex-col justify-center items-center text-center text-white shadow-2xl">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 text-white/50">Estimated Monthly EMI</p>
+                                <p className="text-5xl font-black mb-10 tracking-tighter">₹ 2,04,560</p>
+                                <button className="w-full bg-white text-primary py-4 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:shadow-xl transition-all">Check Eligibility</button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const PricingPage = () => {
+            return (
+                <div className="min-h-screen">
+                    <TopNavBar />
+                    <main className="pt-32 pb-20 px-8 max-w-7xl mx-auto text-center">
+                        <h1 className="text-5xl md:text-7xl font-black text-primary mb-8 tracking-tight">Pay as you <span className="text-secondary italic">grow.</span></h1>
+                        <p className="text-lg text-on-surface-variant max-w-2xl mx-auto mb-20 font-light">Empowering Indian MSMEs with AI-driven tender intelligence. Choose a plan that fits your ambition.</p>
+                        
+                        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                            <div className="bg-white p-12 rounded-3xl border border-outline-variant/30 shadow-xl flex flex-col text-left">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-outline mb-4">Starter</p>
+                                <p className="text-5xl font-black text-primary mb-10 tracking-tighter">₹1,999<span className="text-sm font-medium text-outline">/mo</span></p>
+                                <ul className="space-y-6 mb-12 flex-grow text-sm font-medium">
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">check_circle</span> Daily Notifications</li>
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">check_circle</span> Basic Document Prep</li>
+                                </ul>
+                                <button className="w-full py-4 rounded-xl border-2 border-primary text-primary font-black uppercase text-[10px] tracking-widest">Get Started</button>
+                            </div>
+                            <div className="bg-white p-12 rounded-3xl border-2 border-secondary shadow-2xl flex flex-col text-left relative scale-105 z-10">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-secondary text-white text-[10px] font-black px-6 py-1.5 rounded-full uppercase tracking-widest">Most Popular</div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-secondary mb-4">Growth</p>
+                                <p className="text-5xl font-black text-primary mb-10 tracking-tighter">₹5,999<span className="text-sm font-medium text-outline">/mo</span></p>
+                                <ul className="space-y-6 mb-12 flex-grow text-sm font-bold text-primary">
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">stars</span> AI Technical Review</li>
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">check_circle</span> Unlimited Alerts</li>
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">check_circle</span> Priority Support</li>
+                                </ul>
+                                <button className="w-full py-5 bg-secondary text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl">Choose Growth</button>
+                            </div>
+                            <div className="bg-white p-12 rounded-3xl border border-outline-variant/30 shadow-xl flex flex-col text-left">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-outline mb-4">Enterprise</p>
+                                <p className="text-4xl font-black text-primary mb-10 tracking-tight">Custom</p>
+                                <ul className="space-y-6 mb-12 flex-grow text-sm font-medium">
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">check_circle</span> Dedicated Manager</li>
+                                    <li className="flex gap-4"><span className="material-symbols-outlined text-secondary">check_circle</span> API Access</li>
+                                </ul>
+                                <button className="w-full py-4 rounded-xl border-2 border-primary text-primary font-black uppercase text-[10px] tracking-widest">Contact Sales</button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const App = () => {
+            return (
+                <MemoryRouter>
+                    <Routes>
+                        <Route path="/" element={<HomePage />} />
+                        <Route path="/discovery" element={<DiscoveryPage />} />
+                        <Route path="/application" element={<ApplicationPage />} />
+                        <Route path="/bids" element={<BidAssistancePage />} />
+                        <Route path="/materials" element={<RawMaterialsPage />} />
+                        <Route path="/finance" element={<FinancePage />} />
+                        <Route path="/pricing" element={<PricingPage />} />
+                    </Routes>
+                </MemoryRouter>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

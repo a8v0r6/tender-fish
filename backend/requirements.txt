@@ -1,0 +1,4 @@
+tinyfish
+
+#env variables 
+dotenv
