@@ -17,7 +17,12 @@ async def research_competitor_bids(
     """
     Use TinyFish to research historical bid data for similar tenders.
     Returns competitor analysis with pricing insights.
+    Falls back to mock data if TinyFish is unavailable.
     """
+    if not TINYFISH_AVAILABLE:
+        print("TinyFish not available - using mock competitor data")
+        return get_mock_competitor_data(category, state)
+
     try:
         # Scrape GeM or tender portal for historical data
         goal = f"""
@@ -27,11 +32,11 @@ async def research_competitor_bids(
         Respond in JSON format with:
         - avg_winning_bid_percentage: average winning bid as % of estimated cost
         - typical_bidder_count: average number of bidders
-        - price_range_low: lowest typical bid % 
+        - price_range_low: lowest typical bid %
         - price_range_high: highest typical bid %
         - market_competitiveness: "low", "medium", or "high"
         """
-        
+
         with client.agent.stream(
             url="https://gem.gov.in",
             goal=goal,
@@ -39,7 +44,7 @@ async def research_competitor_bids(
             result = ""
             for event in stream:
                 result += str(event)
-            
+
             # Parse the result (handle potential JSON in text)
             try:
                 return json.loads(result)
@@ -57,7 +62,12 @@ async def research_material_costs(
 ) -> dict:
     """
     Research current material costs and market trends.
+    Falls back to mock data if TinyFish is unavailable.
     """
+    if not TINYFISH_AVAILABLE:
+        print("TinyFish not available - using mock material data")
+        return get_mock_material_data(category, state)
+
     try:
         goal = f"""
         Find current material costs and market trends for {category} projects in {state}, India.
@@ -68,7 +78,7 @@ async def research_material_costs(
         - seasonal_factor: "peak", "off-peak", or "normal"
         - key_materials: list of material names with current prices
         """
-        
+
         with client.agent.stream(
             url="https://www.indiastat.com",
             goal=goal,
@@ -76,7 +86,7 @@ async def research_material_costs(
             result = ""
             for event in stream:
                 result += str(event)
-            
+
             try:
                 return json.loads(result)
             except:

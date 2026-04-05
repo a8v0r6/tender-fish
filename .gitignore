@@ -6,3 +6,6 @@ myvenv
 
 # node modules
 frontend/node_modules
+
+# bytecode
+__pycache__
