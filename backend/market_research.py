@@ -1,12 +1,19 @@
 """
 Market Research Module - Uses TinyFish to gather competitive intelligence
 """
-from tinyfish import TinyFish
 from typing import Optional
 import json
 import os
 
-client = TinyFish()
+# Initialize TinyFish client only if API key is available
+try:
+    from tinyfish import TinyFish
+    client = TinyFish()
+    TINYFISH_AVAILABLE = True
+except ValueError:
+    # No API key provided - will use mock data
+    client = None
+    TINYFISH_AVAILABLE = False
 
 
 async def research_competitor_bids(
