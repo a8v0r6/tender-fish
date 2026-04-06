@@ -8,4 +8,7 @@ myvenv
 frontend/node_modules
 
 # bytecode
-__pycache__frontend/.env.local
+__pycache__
+
+# frontend env
+frontend/.env.local
