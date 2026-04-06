@@ -1,63 +1,188 @@
-import { TENDERS } from '../data/tenders';
-import TenderCard from '../components/TenderCard';
+import { useState } from 'react';
 
-const BidAssistancePage = () => (
-  <main className="lg:ml-64 pt-24 p-8 bg-surface-bright min-h-screen">
-    <header className="mb-10">
-      <h1 className="text-4xl font-black text-primary mb-3">Bid Assistance <span className="text-secondary italic">Dashboard</span></h1>
-      <p className="text-on-surface-variant">Monitor live auctions and optimize your bid strategy with AI-driven insights.</p>
-    </header>
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-    <div className="flex items-center gap-3 mb-8">
-      <div className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></div>
-      <h2 className="text-sm font-black uppercase tracking-widest text-red-600">Live Now: Active Auctions</h2>
-    </div>
+const BidAssistancePage = () => {
+  const [formData, setFormData] = useState({
+    tender_id: '',
+    estimated_cost: '',
+    competitor_count: 5,
+    company_size: 'small',
+    risk_appetite: 'moderate',
+    past_win_rate: 0.35,
+    urgency_score: 7,
+    category: 'civil',
+    state: ''
+  });
 
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-      {TENDERS.slice(0, 2).map((tender) => (
-        <TenderCard key={tender.id} tender={tender} showActions={false} />
-      ))}
-    </div>
+  const [bidResult, setBidResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-    <section className="bg-white rounded-3xl border border-primary/5 shadow-2xl p-10">
-      <h3 className="text-2xl font-black text-primary mb-8">Bid Preparation (BOQ)</h3>
-      <div className="overflow-x-auto rounded-2xl border border-outline-variant/10">
-        <table className="w-full text-left">
-          <thead className="bg-surface-container-low text-[10px] font-black uppercase tracking-widest text-outline">
-            <tr>
-              <th className="p-4">Item</th>
-              <th className="p-4">Qty</th>
-              <th className="p-4">Material</th>
-              <th className="p-4">Labor</th>
-              <th className="p-4 text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm font-medium">
-            <tr className="border-b border-outline-variant/10">
-              <td className="p-4">Earthwork Foundation</td>
-              <td className="p-4">450</td>
-              <td className="p-4">₹12,000</td>
-              <td className="p-4">₹45,000</td>
-              <td className="p-4 text-right font-black">₹65,500</td>
-            </tr>
-            <tr className="border-b border-outline-variant/10">
-              <td className="p-4">Reinforced Concrete M25</td>
-              <td className="p-4">120</td>
-              <td className="p-4">₹8,40,000</td>
-              <td className="p-4">₹1,20,000</td>
-              <td className="p-4 text-right font-black">₹10,08,000</td>
-            </tr>
-          </tbody>
-          <tfoot className="bg-primary text-white">
-            <tr className="font-black">
-              <td className="p-4" colSpan="4">ESTIMATED TOTAL</td>
-              <td className="p-4 text-right text-lg">₹ 10,73,500</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </section>
-  </main>
-);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: ['estimated_cost', 'competitor_count', 'past_win_rate', 'urgency_score'].includes(name)
+        ? parseFloat(value) || value
+        : value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setBidResult(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/bid-assistance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || 'API request failed');
+      }
+
+      const data = await response.json();
+      setBidResult(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="lg:ml-64 pt-24 p-8 bg-surface-bright min-h-screen">
+      <header className="mb-10">
+        <h1 className="text-4xl font-black text-primary mb-3">Bid Assistance <span className="text-secondary italic">Dashboard</span></h1>
+        <p className="text-on-surface-variant">Get AI-powered bid recommendations based on your project details.</p>
+      </header>
+
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-primary/5 shadow-2xl p-10 mb-10">
+        <h2 className="text-2xl font-black text-primary mb-6">Tender Details</h2>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <label className="block text-sm font-medium mb-1">Tender ID</label>
+            <input type="text" name="tender_id" value={formData.tender_id} onChange={handleChange} className="w-full border rounded-lg p-2" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Estimated Cost (₹)</label>
+            <input type="number" name="estimated_cost" value={formData.estimated_cost} onChange={handleChange} className="w-full border rounded-lg p-2" required />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">State</label>
+            <input type="text" name="state" value={formData.state} onChange={handleChange} className="w-full border rounded-lg p-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Category</label>
+            <input type="text" name="category" value={formData.category} onChange={handleChange} className="w-full border rounded-lg p-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Expected Competitors</label>
+            <input type="number" name="competitor_count" value={formData.competitor_count} onChange={handleChange} className="w-full border rounded-lg p-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Company Size</label>
+            <select name="company_size" value={formData.company_size} onChange={handleChange} className="w-full border rounded-lg p-2">
+              <option value="micro">Micro</option>
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Risk Appetite</label>
+            <select name="risk_appetite" value={formData.risk_appetite} onChange={handleChange} className="w-full border rounded-lg p-2">
+              <option value="conservative">Conservative</option>
+              <option value="moderate">Moderate</option>
+              <option value="aggressive">Aggressive</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Past Win Rate (0-1)</label>
+            <input type="number" step="0.01" name="past_win_rate" value={formData.past_win_rate} onChange={handleChange} className="w-full border rounded-lg p-2" min="0" max="1" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Urgency (1-10)</label>
+            <input type="number" name="urgency_score" value={formData.urgency_score} onChange={handleChange} className="w-full border rounded-lg p-2" min="1" max="10" />
+          </div>
+        </div>
+        <button type="submit" disabled={loading} className="mt-8 bg-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 disabled:opacity-50">
+          {loading ? 'Analyzing...' : 'Get Bid Recommendation'}
+        </button>
+      </form>
+
+      {error && (
+        <div className="bg-red-50 text-red-700 p-6 rounded-xl mb-8">{error}</div>
+      )}
+
+      {bidResult && (
+        <div className="bg-white rounded-3xl border border-primary/5 shadow-2xl p-10">
+          <h3 className="text-2xl font-black text-primary mb-6">Bid Recommendation for {bidResult.tender_id}</h3>
+
+          <div className="grid sm:grid-cols-3 gap-6 mb-8">
+            <div className="bg-surface-container-low p-6 rounded-2xl">
+              <p className="text-sm text-outline">Minimum Viable Bid</p>
+              <p className="text-2xl font-black text-primary">₹{bidResult.bid_range.minimum.toLocaleString()}</p>
+            </div>
+            <div className="bg-primary text-white p-6 rounded-2xl">
+              <p className="text-sm opacity-80">Recommended Bid</p>
+              <p className="text-2xl font-black">₹{bidResult.bid_range.recommended.toLocaleString()}</p>
+            </div>
+            <div className="bg-surface-container-low p-6 rounded-2xl">
+              <p className="text-sm text-outline">Max Competitive Bid</p>
+              <p className="text-2xl font-black text-primary">₹{bidResult.bid_range.maximum.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-8 mb-6">
+            <div>
+              <h4 className="font-bold mb-3">Strategy</h4>
+              <p>{bidResult.strategy}</p>
+              <p className="text-sm mt-2">Margin: {bidResult.margin_percentage}%</p>
+              <p className="text-sm">Confidence: {(bidResult.bid_range.confidence * 100).toFixed(0)}%</p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-3">Competitor Analysis</h4>
+              <p>Expected Bidders: {bidResult.competitor_analysis.expected_bidders}</p>
+              <p>Pressure: {bidResult.competitor_analysis.price_pressure}</p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h4 className="font-bold mb-3">Market Insights</h4>
+            <p>Materials: {bidResult.market_insights.material_trend}</p>
+            <p>Labor: {bidResult.market_insights.labor_availability}</p>
+            <p>Seasonal Factor: {bidResult.market_insights.seasonal_factor}</p>
+          </div>
+
+          <div className="mb-6">
+            <h4 className="font-bold mb-3">Risk Factors</h4>
+            <ul className="list-disc list-inside">
+              {bidResult.risk_factors.map((r, i) => <li key={i}>{r}</li>)}
+            </ul>
+          </div>
+
+          <div className="mb-6">
+            <h4 className="font-bold mb-3">Action Items</h4>
+            <ul className="list-disc list-inside">
+              {bidResult.action_items.map((a, i) => <li key={i}>{a}</li>)}
+            </ul>
+          </div>
+
+          <div className="text-sm text-on-surface-variant">
+            <h4 className="font-bold mb-2">Reasoning</h4>
+            <p>{bidResult.reasoning}</p>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+};
 
 export default BidAssistancePage;
