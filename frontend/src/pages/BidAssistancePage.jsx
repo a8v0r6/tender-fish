@@ -29,6 +29,12 @@ const BidAssistancePage = () => {
     }));
   };
 
+  const handleOutcome = async (won) => {
+    if (!bidResult) return;
+    // In a real app, this would call a backend endpoint to save the outcome
+    alert(`Outcome recorded: ${won ? 'Won' : 'Lost'}! This will help refine future AI predictions.`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -173,6 +179,11 @@ const BidAssistancePage = () => {
             <ul className="list-disc list-inside">
               {bidResult.action_items.map((a, i) => <li key={i}>{a}</li>)}
             </ul>
+          </div>
+
+          <div className="mb-6 flex gap-4">
+            <button onClick={() => handleOutcome(true)} className="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700">Mark as Won</button>
+            <button onClick={() => handleOutcome(false)} className="flex-1 bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700">Mark as Lost</button>
           </div>
 
           <div className="text-sm text-on-surface-variant">

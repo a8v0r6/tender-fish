@@ -2,27 +2,40 @@
 FastAPI Backend for TenderFish Bid Assistance
 Combines TinyFish market research with custom AI prediction engine
 """
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from models import BidRequest, BidResponse
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
+from database import SessionLocal, init_db, BidRecord
 import uvicorn
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Initialize Database
+init_db()
+
+# Rate Limiting
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="TenderFish Bid Assistance API",
     description="AI-powered bid price optimization for government tenders",
-    version="1.0.0"
+    version="2.0.0"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=["*"],  # Allow all for Tailscale/Production flexibility
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,19 +53,35 @@ async def root():
 
 
 @app.post("/api/bid-assistance", response_model=BidResponse)
-async def get_bid_recommendation(request: BidRequest):
+@limiter.limit("30/minute")
+async def get_bid_recommendation(request: Request, bid_request: BidRequest):
     """
     Main endpoint for bid price optimization.
     Uses TinyFish for market research + custom AI engine for predictions.
     """
+    db = SessionLocal()
     try:
-        result = await predict_optimal_bid(request)
+        result = await predict_optimal_bid(bid_request)
+        
+        # Save to Database
+        new_bid = BidRecord(
+            tender_id=bid_request.tender_id,
+            estimated_cost=bid_request.estimated_cost,
+            recommended_bid=result['bid_range']['recommended'],
+            strategy=result['strategy'],
+            margin_percentage=result['margin_percentage']
+        )
+        db.add(new_bid)
+        db.commit()
+        
         return BidResponse(**result)
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Bid prediction failed: {str(e)}"
         )
+    finally:
+        db.close()
 
 
 @app.get("/api/market-research/competitors")
