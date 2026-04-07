@@ -10,7 +10,10 @@ from slowapi.errors import RateLimitExceeded
 from models import BidRequest, BidResponse
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
-from database import SessionLocal, init_db, BidRecord
+from database import SessionLocal, init_db, BidRecord, UserProfile
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from alerts import send_tender_alert
+# from tinyfish import search_tenders  # Ready for live integration
 import uvicorn
 import os
 from dotenv import load_dotenv
@@ -19,6 +22,25 @@ load_dotenv()
 
 # Initialize Database
 init_db()
+
+# Initialize Scheduler
+scheduler = AsyncIOScheduler()
+
+async def check_for_new_tenders():
+    """Background task to scan for tenders and alert users."""
+    db = SessionLocal()
+    try:
+        users = db.query(UserProfile).filter(UserProfile.telegram_id != None).all()
+        for user in users:
+            # In a real scenario, we'd use tinyfish to search live portals
+            # For now, we'll simulate a match based on mock data
+            print(f"Checking alerts for {user.company_name}...")
+            # TODO: Implement live search logic here
+    finally:
+        db.close()
+
+scheduler.add_job(check_for_new_tenders, 'interval', hours=6)
+scheduler.start()
 
 # Rate Limiting
 limiter = Limiter(key_func=get_remote_address)

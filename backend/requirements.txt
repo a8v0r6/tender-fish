@@ -15,3 +15,6 @@ httpx
 scikit-learn
 pandas
 numpy
+
+# Scheduling
+apscheduler==3.10.4

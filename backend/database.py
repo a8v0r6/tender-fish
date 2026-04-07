@@ -15,7 +15,11 @@ class UserProfile(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     company_name = Column(String, index=True)
+    telegram_id = Column(String, nullable=True)  # For alerts
     company_size = Column(String)
+    preferred_state = Column(String, nullable=True)
+    preferred_category = Column(String, nullable=True)
+    max_tender_value = Column(Float, nullable=True)
     past_win_rate = Column(Float, default=0.3)
     risk_appetite = Column(String, default="moderate")
     created_at = Column(DateTime, default=datetime.utcnow)

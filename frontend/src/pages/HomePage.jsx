@@ -188,7 +188,7 @@ const HomePage = () => {
       </section>
 
       {/* Strategic Execution */}
-      <section className="py-32 bg-white relative">
+      <section id="how-it-works" className="py-32 bg-white relative">
         <div className="max-w-7xl mx-auto px-8">
           <div className="text-center mb-24">
             <h2 className="font-headline text-5xl text-primary font-black mb-6">Strategic Execution</h2>
