@@ -11,6 +11,10 @@ pydantic
 # HTTP client for API calls
 httpx
 
+# Password hashing
+passlib[bcrypt]
+bcrypt
+
 # Optional: For future ML models
 scikit-learn
 pandas

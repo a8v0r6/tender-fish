@@ -10,6 +10,7 @@ from slowapi.errors import RateLimitExceeded
 from models import BidRequest, BidResponse
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
+from auth import UserRegister, UserLogin, get_password_hash, create_access_token, verify_password, get_current_user
 from database import SessionLocal, init_db, BidRecord, UserProfile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
@@ -63,6 +64,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.post("/api/auth/register")
+async def register_user(user: UserRegister):
+    db = SessionLocal()
+    try:
+        existing = db.query(UserProfile).filter(UserProfile.email == user.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        new_user = UserProfile(
+            email=user.email,
+            hashed_password=get_password_hash(user.password),
+            company_name=user.company_name
+        )
+        db.add(new_user)
+        db.commit()
+        return {"message": "User registered successfully"}
+    finally:
+        db.close()
+
+@app.post("/api/auth/login")
+async def login_user(user: UserLogin):
+    db = SessionLocal()
+    try:
+        db_user = db.query(UserProfile).filter(UserProfile.email == user.username).first()
+        if not db_user or not verify_password(user.password, db_user.hashed_password):
+            raise HTTPException(status_code=401, detail="Incorrect email or password")
+        
+        token = create_access_token(data={"sub": db_user.email})
+        return {"access_token": token, "token_type": "bearer"}
+    finally:
+        db.close()
 
 @app.get("/")
 async def root():

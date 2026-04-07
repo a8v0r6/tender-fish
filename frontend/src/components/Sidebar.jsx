@@ -5,10 +5,15 @@ const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-64 nav-gradient border-r border-white/10 flex-col z-40 pt-24 shadow-2xl">
-      <div className="px-8 mb-10">
-        <h2 className="font-['Noto_Serif'] text-xl font-black text-white tracking-tighter">TenderFish</h2>
-        <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-black mt-1">Strategic Procurement</p>
+    <aside className="flex lg:flex fixed left-0 top-0 h-screen w-64 nav-gradient border-r border-white/10 flex-col z-40 pt-24 shadow-2xl">
+      <div className="px-8 mb-10 flex justify-between items-center">
+        <div>
+          <h2 className="font-['Noto_Serif'] text-xl font-black text-white tracking-tighter">TenderFish</h2>
+          <p className="text-[9px] uppercase tracking-[0.2em] text-white/40 font-black mt-1">Strategic Procurement</p>
+        </div>
+        <button className="lg:hidden text-white/70" onClick={() => window.location.reload()}> 
+          {/* We'll handle close via the overlay click in App.jsx, but this is a safe fallback */}
+        </button>
       </div>
       <nav className="flex-grow">
         {[

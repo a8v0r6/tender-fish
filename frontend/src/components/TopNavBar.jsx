@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 
-const TopNavBar = () => {
+const TopNavBar = ({ setIsMobileMenuOpen }) => {
   const location = useLocation();
   const isHome = location.pathname === '/';
 
@@ -16,8 +16,16 @@ const TopNavBar = () => {
   };
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-emerald-900/5 flex justify-between items-center px-8 py-4">
-      <Link to="/" className="font-['Noto_Serif'] text-2xl font-black text-primary tracking-tight">TenderFish</Link>
+    <nav className="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-emerald-900/5 flex justify-between items-center px-4 md:px-8 py-4">
+      <div className="flex items-center gap-4">
+        <button 
+          className="md:hidden text-primary material-symbols-outlined text-3xl"
+          onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(true)}
+        >
+          menu
+        </button>
+        <Link to="/" className="font-['Noto_Serif'] text-2xl font-black text-primary tracking-tight">TenderFish</Link>
+      </div>
       <div className="hidden md:flex gap-10 items-center">
         {isHome ? (
           <>

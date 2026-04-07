@@ -14,6 +14,8 @@ class UserProfile(Base):
     __tablename__ = "user_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
     company_name = Column(String, index=True)
     telegram_id = Column(String, nullable=True)  # For alerts
     company_size = Column(String)
