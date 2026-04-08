@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 
-const Sidebar = () => {
+const Sidebar = ({ onLinkClick }) => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
 
@@ -24,7 +24,12 @@ const Sidebar = () => {
           { to: '/materials', icon: 'inventory_2', label: 'Raw Materials' },
           { to: '/finance', icon: 'payments', label: 'Finance & Lending' }
         ].map((item) => (
-          <Link key={item.to} to={item.to} className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive(item.to) ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}>
+          <Link 
+            key={item.to} 
+            to={item.to} 
+            className={`flex items-center gap-4 px-8 py-4 transition-all text-[11px] font-black uppercase tracking-widest ${isActive(item.to) ? 'bg-white/10 text-white border-l-4 border-secondary' : 'text-white/70 hover:bg-white/5 hover:text-white'}`}
+            onClick={onLinkClick}
+          >
             <span className="material-symbols-outlined text-lg">{item.icon}</span>
             {item.label}
           </Link>

@@ -25,7 +25,7 @@ const AppContent = () => {
       {/* Mobile Menu Overlay - Available on all pages */}
       <div className={`fixed inset-0 z-40 lg:hidden bg-black/50 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsMobileMenuOpen(false)}>
         <div className={`w-64 h-full bg-primary transform transition-transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <Sidebar />
+          <Sidebar onLinkClick={() => setIsMobileMenuOpen(false)} />
         </div>
       </div>
 
