@@ -3,7 +3,7 @@ import TopNavBar from '../components/TopNavBar';
 import Sidebar from '../components/Sidebar';
 import { useLocation } from 'react-router-dom';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://100.116.31.114:8000';
 
 const BidAutopsyPage = () => {
   const location = useLocation();

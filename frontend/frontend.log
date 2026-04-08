@@ -8,3 +8,5 @@
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://192.168.0.199:5173/
   ➜  Network: http://100.116.31.114:5173/
+12:57:52 PM [vite] hmr update /src/pages/BidAutopsyPage.jsx
+12:58:23 PM [vite] hmr update /src/pages/BidAssistancePage.jsx
