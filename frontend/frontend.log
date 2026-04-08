@@ -3,11 +3,8 @@
 > vite --host
 
 
-  VITE v5.4.21  ready in 169 ms
+  VITE v5.4.21  ready in 163 ms
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://192.168.0.199:5173/
   ➜  Network: http://100.116.31.114:5173/
-7:40:08 PM [vite] hmr update /src/components/TopNavBar.jsx
-8:18:29 PM [vite] hmr update /src/App.jsx
-8:18:35 PM [vite] hmr update /src/components/Sidebar.jsx

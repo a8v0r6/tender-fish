@@ -4,3 +4,8 @@ INFO:     Started reloader process [24330] using StatReload
 INFO:     Started server process [24361]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24361]
+INFO:     Stopping reloader process [24330]

@@ -14,6 +14,7 @@ from auth import UserRegister, UserLogin, get_password_hash, create_access_token
 from database import SessionLocal, init_db, BidRecord, UserProfile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
+from bid_autopsy import router as bid_autopsy_router  # New: Bid Autopsy
 # from tinyfish import search_tenders  # Ready for live integration
 import uvicorn
 import os
@@ -64,6 +65,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include Bid Autopsy routes
+app.include_router(bid_autopsy_router)
+
+@app.get("/")
+async def root():
+    """API health check"""
+    return {
+        "message": "TenderFish Bid Assistance API",
+        "status": "active",
+        "version": "2.0.0"
+    }
 
 @app.post("/api/auth/register")
 async def register_user(user: UserRegister):
@@ -97,16 +109,6 @@ async def login_user(user: UserLogin):
     finally:
         db.close()
 
-@app.get("/")
-async def root():
-    """API health check"""
-    return {
-        "message": "TenderFish Bid Assistance API",
-        "status": "active",
-        "version": "1.0.0"
-    }
-
-
 @app.post("/api/bid-assistance", response_model=BidResponse)
 @limiter.limit("30/minute")
 async def get_bid_recommendation(request: Request, bid_request: BidRequest):
@@ -138,7 +140,6 @@ async def get_bid_recommendation(request: Request, bid_request: BidRequest):
     finally:
         db.close()
 
-
 @app.get("/api/market-research/competitors")
 async def get_competitor_analysis(
     category: str = "civil",
@@ -162,7 +163,6 @@ async def get_competitor_analysis(
             detail=f"Market research failed: {str(e)}"
         )
 
-
 @app.get("/api/market-research/materials")
 async def get_material_costs(
     category: str = "civil",
@@ -183,7 +183,6 @@ async def get_material_costs(
             status_code=500,
             detail=f"Material research failed: {str(e)}"
         )
-
 
 @app.post("/api/bid-assistance/batch")
 async def batch_bid_analysis(requests: list[BidRequest]):
@@ -210,7 +209,6 @@ async def batch_bid_analysis(requests: list[BidRequest]):
 
     return {"batch_results": results}
 
-
 @app.get("/api/health")
 async def health_check():
     """Detailed health check"""
@@ -221,7 +219,7 @@ async def health_check():
             "bid_engine": "active",
             "market_research": "active"
         },
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 

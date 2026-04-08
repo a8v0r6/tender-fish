@@ -27,6 +27,7 @@ class UserProfile(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     bids = relationship("BidRecord", back_populates="profile")
+    documents = relationship("BidDocument", back_populates="profile")
 
 
 class BidRecord(Base):
@@ -56,6 +57,35 @@ class BidOutcome(Base):
     recorded_at = Column(DateTime, default=datetime.utcnow)
     
     bid = relationship("BidRecord", back_populates="outcome")
+
+
+class BidDocument(Base):
+    __tablename__ = "bid_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user_profiles.id"))
+    filename = Column(String)
+    filepath = Column(String)
+    document_type = Column(String)  # 'lost_bid', 'won_bid', 'emD', etc.
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    analysis_status = Column(String, default="pending")  # pending, processing, complete, failed
+
+    profile = relationship("UserProfile", back_populates="documents")
+    analysis = relationship("BidAnalysis", back_populates="document", uselist=False)
+
+
+class BidAnalysis(Base):
+    __tablename__ = "bid_analyses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("bid_documents.id"))
+    analyzed_at = Column(DateTime, default=datetime.utcnow)
+    summary = Column(String)
+    reason_for_loss = Column(String)
+    improvement_tips = Column(String)  # JSON string of tips
+    confidence_score = Column(Float)
+
+    document = relationship("BidDocument", back_populates="analysis")
 
 
 def init_db():

@@ -20,6 +20,7 @@ const Sidebar = () => {
           { to: '/discovery', icon: 'search', label: 'Tender Discovery' },
           { to: '/application', icon: 'edit_note', label: 'Application Helper' },
           { to: '/bids', icon: 'gavel', label: 'Bid Assistance' },
+          { to: '/autopsy', icon: 'biopsy', label: 'Bid Autopsy' },
           { to: '/materials', icon: 'inventory_2', label: 'Raw Materials' },
           { to: '/finance', icon: 'payments', label: 'Finance & Lending' }
         ].map((item) => (

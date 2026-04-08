@@ -11,6 +11,7 @@ import FinancePage from './pages/FinancePage';
 import PricingPage from './pages/PricingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import BidAutopsyPage from './pages/BidAutopsyPage';
 
 const AppContent = () => {
   const location = useLocation();
@@ -41,6 +42,7 @@ const AppContent = () => {
         <Route path="/materials" element={<RawMaterialsPage />} />
         <Route path="/finance" element={<FinancePage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/autopsy" element={<BidAutopsyPage />} />
       </Routes>
     </>
   );

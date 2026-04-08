@@ -22,3 +22,6 @@ numpy
 
 # Scheduling
 apscheduler==3.10.4
+
+# File uploads
+python-multipart
