@@ -10,9 +10,11 @@ from slowapi.errors import RateLimitExceeded
 from models import BidRequest, BidResponse
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
+from auth import UserRegister, UserLogin, get_password_hash, create_access_token, verify_password, get_current_user
 from database import SessionLocal, init_db, BidRecord, UserProfile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
+from bid_autopsy import router as bid_autopsy_router  # New: Bid Autopsy
 # from tinyfish import search_tenders  # Ready for live integration
 import uvicorn
 import os
@@ -63,6 +65,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include Bid Autopsy routes
+app.include_router(bid_autopsy_router)
 
 @app.get("/")
 async def root():
@@ -70,9 +74,40 @@ async def root():
     return {
         "message": "TenderFish Bid Assistance API",
         "status": "active",
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
+@app.post("/api/auth/register")
+async def register_user(user: UserRegister):
+    db = SessionLocal()
+    try:
+        existing = db.query(UserProfile).filter(UserProfile.email == user.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        
+        new_user = UserProfile(
+            email=user.email,
+            hashed_password=get_password_hash(user.password),
+            company_name=user.company_name
+        )
+        db.add(new_user)
+        db.commit()
+        return {"message": "User registered successfully"}
+    finally:
+        db.close()
+
+@app.post("/api/auth/login")
+async def login_user(user: UserLogin):
+    db = SessionLocal()
+    try:
+        db_user = db.query(UserProfile).filter(UserProfile.email == user.username).first()
+        if not db_user or not verify_password(user.password, db_user.hashed_password):
+            raise HTTPException(status_code=401, detail="Incorrect email or password")
+        
+        token = create_access_token(data={"sub": db_user.email})
+        return {"access_token": token, "token_type": "bearer"}
+    finally:
+        db.close()
 
 @app.post("/api/bid-assistance", response_model=BidResponse)
 @limiter.limit("30/minute")
@@ -105,7 +140,6 @@ async def get_bid_recommendation(request: Request, bid_request: BidRequest):
     finally:
         db.close()
 
-
 @app.get("/api/market-research/competitors")
 async def get_competitor_analysis(
     category: str = "civil",
@@ -129,7 +163,6 @@ async def get_competitor_analysis(
             detail=f"Market research failed: {str(e)}"
         )
 
-
 @app.get("/api/market-research/materials")
 async def get_material_costs(
     category: str = "civil",
@@ -150,7 +183,6 @@ async def get_material_costs(
             status_code=500,
             detail=f"Material research failed: {str(e)}"
         )
-
 
 @app.post("/api/bid-assistance/batch")
 async def batch_bid_analysis(requests: list[BidRequest]):
@@ -177,7 +209,6 @@ async def batch_bid_analysis(requests: list[BidRequest]):
 
     return {"batch_results": results}
 
-
 @app.get("/api/health")
 async def health_check():
     """Detailed health check"""
@@ -188,7 +219,7 @@ async def health_check():
             "bid_engine": "active",
             "market_research": "active"
         },
-        "version": "1.0.0"
+        "version": "2.0.0"
     }
 
 
