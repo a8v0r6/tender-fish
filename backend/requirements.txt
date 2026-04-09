@@ -21,7 +21,10 @@ pandas
 numpy
 
 # Scheduling
-apscheduler==3.10.4
+apscheduler
 
 # File uploads
 python-multipart
+
+# Rate limiting
+slowapi
