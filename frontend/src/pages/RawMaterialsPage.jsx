@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useToast } from '../components/Toast';
+import { SkeletonSupplierCard } from '../components/Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://100.116.31.114:8000';
 
 const RawMaterialsPage = () => {
+  const toast = useToast();
   const [query, setQuery] = useState('');
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,9 +45,9 @@ const RawMaterialsPage = () => {
       });
       if (!res.ok) throw new Error('Negotiation failed');
       const data = await res.json();
-      alert(data.message);
+      toast(data.message, 'success');
     } catch (err) {
-      alert(`Negotiation failed: ${err.message}`);
+      toast(`Negotiation failed: ${err.message}`, 'error');
     } finally {
       setNegotiating(null);
     }
@@ -65,10 +68,10 @@ const RawMaterialsPage = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
         <div className="xl:col-span-8 space-y-8">
-          {loading && <div className="text-center py-20 text-outline text-lg">Searching suppliers...</div>}
+          {loading && [1, 2, 3].map(i => <SkeletonSupplierCard key={i} />)}
           {error && <div className="bg-red-50 text-red-700 p-6 rounded-xl">{error}</div>}
           {!loading && !error && suppliers.length === 0 && (
-            <div className="text-center py-20 text-outline"><p className="text-2xl mb-2">No suppliers found</p><p className="text-sm">Try a different material name</p></div>
+            <div className="text-center py-20 text-outline"><div className="text-5xl mb-4">🔍</div><p className="text-2xl mb-2 font-bold text-primary">No suppliers found</p><p className="text-sm">Try a different material name or check spelling</p></div>
           )}
           {!loading && suppliers.map(s => (
             <article key={s.id} className="bg-white rounded-3xl border border-primary/5 shadow-xl p-8 hover:shadow-2xl transition-all">

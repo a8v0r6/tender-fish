@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './components/Toast';
+import ErrorBoundary from './components/ErrorBoundary';
 import TopNavBar from './components/TopNavBar';
 import Sidebar from './components/Sidebar';
 import HomePage from './pages/HomePage';
@@ -29,7 +31,7 @@ const AppContent = () => {
   const protect = (element) => <ProtectedRoute>{element}</ProtectedRoute>;
 
   return (
-    <>
+    <ErrorBoundary>
       <TopNavBar isMobileMenuOpen={isMobileMenuOpen} setIsMobileMenuOpen={setIsMobileMenuOpen} />
       
       <div className={`fixed inset-0 z-40 lg:hidden bg-black/50 transition-opacity ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsMobileMenuOpen(false)}>
@@ -52,14 +54,16 @@ const AppContent = () => {
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/autopsy" element={protect(<BidAutopsyPage />)} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 };
 
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   </BrowserRouter>
 );

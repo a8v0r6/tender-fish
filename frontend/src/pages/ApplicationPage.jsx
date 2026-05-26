@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useToast } from '../components/Toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://100.116.31.114:8000';
 
 const STEPS = ['Company Profile', 'Business Documents', 'Financial Details', 'Tender Selection', 'Review & Submit'];
 
 const ApplicationPage = () => {
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -37,8 +39,9 @@ const ApplicationPage = () => {
       });
       if (!res.ok) throw new Error('Submission failed');
       setSubmitted(true);
+      toast('Application submitted successfully!', 'success');
     } catch (err) {
-      alert(`Error: ${err.message}`);
+      toast(`Error: ${err.message}`, 'error');
     } finally {
       setSubmitting(false);
     }

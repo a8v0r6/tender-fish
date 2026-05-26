@@ -2,6 +2,7 @@ import { useState } from 'react';
 import TopNavBar from '../components/TopNavBar';
 import Sidebar from '../components/Sidebar';
 import { useLocation } from 'react-router-dom';
+import { useToast } from '../components/Toast';
 
 const API_URL = "http://localhost:8000";
 
@@ -22,6 +23,7 @@ function getAuthHeaders() {
 
 const BidAutopsyPage = () => {
   const location = useLocation();
+  const toast = useToast();
   const showSidebar = location.pathname !== '/';
   const [file, setFile] = useState(null);
   const [analysis, setAnalysis] = useState(null);
@@ -68,8 +70,10 @@ const BidAutopsyPage = () => {
       const analysisData = await analysisRes.json();
 
       setAnalysis(analysisData);
+      toast('Analysis complete! Review the insights below.', 'success');
     } catch (err) {
       setError(err.message);
+      toast(err.message, 'error');
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import TenderCard from '../components/TenderCard';
+import { SkeletonCard } from '../components/Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://100.116.31.114:8000';
 
@@ -56,10 +57,10 @@ const DiscoveryPage = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-8 space-y-6">
-          {loading && <div className="text-center py-20 text-outline text-lg">Searching tenders...</div>}
+          {loading && [1, 2, 3].map(i => <SkeletonCard key={i} />)}
           {error && <div className="bg-red-50 text-red-700 p-6 rounded-xl">{error}</div>}
           {!loading && !error && tenders.length === 0 && (
-            <div className="text-center py-20 text-outline"><p className="text-2xl mb-2">No tenders found</p><p className="text-sm">Try adjusting your search or filters</p></div>
+            <div className="text-center py-20 text-outline"><div className="text-5xl mb-4">📋</div><p className="text-2xl mb-2 font-bold text-primary">No matching tenders</p><p className="text-sm">Try different keywords, change the state filter, or browse all tenders</p></div>
           )}
           {!loading && tenders.map(t => <TenderCard key={t.id} tender={t} />)}
         </div>

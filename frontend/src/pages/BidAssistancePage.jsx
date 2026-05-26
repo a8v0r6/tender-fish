@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useToast } from '../components/Toast';
+import { SkeletonResultCard } from '../components/Skeleton';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://100.116.31.114:8000';
 
 const BidAssistancePage = () => {
+  const toast = useToast();
   const [formData, setFormData] = useState({
     tender_id: '',
     estimated_cost: '',
@@ -42,9 +45,9 @@ const BidAssistancePage = () => {
         body: JSON.stringify({ bid_id: bidResult.bid_id, won })
       });
       if (!response.ok) throw new Error('Failed to record outcome');
-      alert(`Outcome recorded: ${won ? 'Won' : 'Lost'}! This will help refine future AI predictions.`);
+      toast(`Marked as ${won ? 'Won' : 'Lost'}! This helps refine AI predictions.`, 'success');
     } catch (err) {
-      alert(`Error recording outcome: ${err.message}`);
+      toast(`Error recording outcome: ${err.message}`, 'error');
     }
   };
 
@@ -143,6 +146,8 @@ const BidAssistancePage = () => {
       {error && (
         <div className="bg-red-50 text-red-700 p-6 rounded-xl mb-8">{error}</div>
       )}
+
+      {loading && <SkeletonResultCard />}
 
       {bidResult && (
         <div className="bg-white rounded-3xl border border-primary/5 shadow-2xl p-10">
