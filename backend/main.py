@@ -10,7 +10,7 @@ from slowapi.errors import RateLimitExceeded
 from models import BidRequest, BidResponse, BidOutcomeRequest, TenderResponse, SupplierResponse, NegotiateRequest, NegotiateResponse, ApplicationRequest
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
-from auth import UserRegister, UserLogin, get_password_hash, create_access_token, verify_password, get_current_user
+from auth import UserRegister, UserLogin, get_password_hash, create_access_token, verify_password, get_current_user, get_optional_user
 from database import SessionLocal, init_db, BidRecord, BidOutcome, UserProfile, Tender, Supplier, BidApplication
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
@@ -152,7 +152,7 @@ async def login_user(user: UserLogin):
 
 @app.post("/api/bid-assistance", response_model=BidResponse)
 @limiter.limit("30/minute")
-async def get_bid_recommendation(request: Request, bid_request: BidRequest):
+async def get_bid_recommendation(request: Request, bid_request: BidRequest, current_user: UserProfile = Depends(get_optional_user)):
     """
     Main endpoint for bid price optimization.
     Uses TinyFish for market research + custom AI engine for predictions.
@@ -166,7 +166,8 @@ async def get_bid_recommendation(request: Request, bid_request: BidRequest):
             estimated_cost=bid_request.estimated_cost,
             recommended_bid=result['bid_range']['recommended'],
             strategy=result['strategy'],
-            margin_percentage=result['margin_percentage']
+            margin_percentage=result['margin_percentage'],
+            profile_id=current_user.id if current_user else None
         )
         db.add(new_bid)
         db.commit()
@@ -228,7 +229,7 @@ async def get_material_costs(
         )
 
 @app.post("/api/bid-assistance/batch")
-async def batch_bid_analysis(requests: list[BidRequest]):
+async def batch_bid_analysis(requests: list[BidRequest], current_user: UserProfile = Depends(get_optional_user)):
     """
     Process multiple bid requests in batch.
     Useful for comparing multiple tenders.
@@ -254,7 +255,7 @@ async def batch_bid_analysis(requests: list[BidRequest]):
 
 
 @app.post("/api/bids/outcome")
-async def record_bid_outcome(outcome: BidOutcomeRequest):
+async def record_bid_outcome(outcome: BidOutcomeRequest, current_user: UserProfile = Depends(get_optional_user)):
     db = SessionLocal()
     try:
         bid_record = db.query(BidRecord).filter(BidRecord.id == outcome.bid_id).first()
@@ -276,6 +277,18 @@ async def record_bid_outcome(outcome: BidOutcomeRequest):
         raise HTTPException(status_code=500, detail=f"Failed to record outcome: {str(e)}")
     finally:
         db.close()
+
+
+@app.get("/api/auth/me")
+async def get_my_profile(current_user: UserProfile = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "company_name": current_user.company_name,
+        "company_size": current_user.company_size,
+        "past_win_rate": current_user.past_win_rate,
+        "risk_appetite": current_user.risk_appetite
+    }
 
 
 @app.get("/api/tenders", response_model=list[TenderResponse])

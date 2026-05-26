@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import TopNavBar from '../components/TopNavBar';
+import { useAuth } from '../context/AuthContext';
 
-const API_URL ='http://100.116.31.114:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://100.116.31.114:8000';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -20,7 +21,7 @@ const LoginPage = () => {
       });
       if (!res.ok) throw new Error('Invalid credentials');
       const data = await res.json();
-      localStorage.setItem('token', data.access_token);
+      login(data.access_token);
       navigate('/discovery');
     } catch (err) {
       setError(err.message);
@@ -29,7 +30,6 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-surface-bright">
-      <TopNavBar />
       <div className="flex items-center justify-center pt-24 px-4">
         <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl border border-primary/5">
           <h2 className="text-3xl font-black text-primary mb-2 text-center">Welcome Back</h2>

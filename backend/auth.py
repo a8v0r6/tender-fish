@@ -64,3 +64,17 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     if user is None:
         raise credentials_exception
     return user
+
+
+def get_optional_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        db = SessionLocal()
+        user = db.query(UserProfile).filter(UserProfile.email == email).first()
+        db.close()
+        return user
+    except Exception:
+        return None

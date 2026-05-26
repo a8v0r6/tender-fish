@@ -1,7 +1,10 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const TopNavBar = ({ setIsMobileMenuOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
   const isHome = location.pathname === '/';
 
   const scrollToHowItWorks = () => {
@@ -13,6 +16,11 @@ const TopNavBar = ({ setIsMobileMenuOpen }) => {
     } else {
       window.location.href = '/#how-it-works';
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   return (
@@ -31,7 +39,14 @@ const TopNavBar = ({ setIsMobileMenuOpen }) => {
           <>
             <a onClick={scrollToHowItWorks} className="text-sm text-on-surface-variant hover:text-primary transition-colors font-semibold tracking-tight cursor-pointer">How it works</a>
             <Link to="/pricing" className="text-sm text-on-surface-variant hover:text-primary transition-colors font-semibold tracking-tight">Pricing</Link>
-            <a className="text-sm text-on-surface-variant hover:text-primary transition-colors font-semibold tracking-tight cursor-pointer">Login</a>
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-semibold text-primary">{user?.email}</span>
+                <button onClick={handleLogout} className="text-sm text-on-surface-variant hover:text-red-500 transition-colors font-semibold tracking-tight">Logout</button>
+              </div>
+            ) : (
+              <Link to="/login" className="text-sm text-on-surface-variant hover:text-primary transition-colors font-semibold tracking-tight">Login</Link>
+            )}
             <Link to="/discovery" className="bg-primary text-white px-6 py-2.5 rounded text-sm font-bold shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all active:scale-[0.98]">
               Start Free Trial
             </Link>
@@ -42,6 +57,14 @@ const TopNavBar = ({ setIsMobileMenuOpen }) => {
             <Link to="/application" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Application Helper</Link>
             <Link to="/materials" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Raw Materials</Link>
             <Link to="/finance" className="text-sm font-semibold text-on-surface-variant hover:text-primary transition-colors tracking-tight">Finance & Lending</Link>
+            {isAuthenticated ? (
+              <div className="flex items-center gap-4 border-l border-outline-variant/30 pl-6">
+                <span className="text-sm font-semibold text-primary">{user?.email}</span>
+                <button onClick={handleLogout} className="text-sm text-on-surface-variant hover:text-red-500 transition-colors font-semibold">Logout</button>
+              </div>
+            ) : (
+              <Link to="/login" className="text-sm font-semibold text-primary hover:text-secondary transition-colors tracking-tight">Login</Link>
+            )}
           </>
         )}
       </div>
