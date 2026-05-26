@@ -30,9 +30,22 @@ const BidAssistancePage = () => {
   };
 
   const handleOutcome = async (won) => {
-    if (!bidResult) return;
-    // In a real app, this would call a backend endpoint to save the outcome
-    alert(`Outcome recorded: ${won ? 'Won' : 'Lost'}! This will help refine future AI predictions.`);
+    if (!bidResult?.bid_id) return;
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_URL}/api/bids/outcome`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ bid_id: bidResult.bid_id, won })
+      });
+      if (!response.ok) throw new Error('Failed to record outcome');
+      alert(`Outcome recorded: ${won ? 'Won' : 'Lost'}! This will help refine future AI predictions.`);
+    } catch (err) {
+      alert(`Error recording outcome: ${err.message}`);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -42,9 +55,13 @@ const BidAssistancePage = () => {
     setBidResult(null);
 
     try {
+      const token = localStorage.getItem('token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const response = await fetch(`${API_URL}/api/bid-assistance`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(formData)
       });
 

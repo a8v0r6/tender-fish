@@ -59,3 +59,11 @@ class BidResponse(BaseModel):
     action_items: List[str] = Field(..., description="Actionable next steps")
     margin_percentage: float = Field(..., description="Recommended profit margin %")
     reasoning: str = Field(..., description="Explanation of how the recommendation was derived")
+    bid_id: Optional[int] = Field(None, description="Database ID for outcome tracking")
+
+
+class BidOutcomeRequest(BaseModel):
+    bid_id: int = Field(..., description="ID of the bid record")
+    won: bool = Field(..., description="Whether the bid was won")
+    actual_winning_bid: Optional[float] = Field(None, description="Actual winning bid amount")
+    feedback: Optional[str] = Field(None, description="User feedback on the prediction")

@@ -5,6 +5,21 @@ import { useLocation } from 'react-router-dom';
 
 const API_URL = "http://localhost:8000";
 
+function getUserIdFromToken() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split('.')[1])).user_id;
+  } catch { return null; }
+}
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return headers;
+}
+
 const BidAutopsyPage = () => {
   const location = useLocation();
   const showSidebar = location.pathname !== '/';
@@ -27,10 +42,11 @@ const BidAutopsyPage = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('document_type', 'lost_bid');
-      formData.append('user_id', '1'); // TODO: Get from auth context
+      formData.append('user_id', getUserIdFromToken() || '1');
 
       const uploadRes = await fetch(`${API_URL}/api/bid-autopsy/upload`, {
         method: 'POST',
+        headers: getAuthHeaders(),
         body: formData
       });
 
@@ -40,10 +56,15 @@ const BidAutopsyPage = () => {
       const docId = uploadData.document_id;
 
       // Trigger analysis
-      await fetch(`${API_URL}/api/bid-autopsy/analyze/${docId}`, { method: 'POST' });
+      await fetch(`${API_URL}/api/bid-autopsy/analyze/${docId}`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
 
       // Get results
-      const analysisRes = await fetch(`${API_URL}/api/bid-autopsy/analysis/${docId}`);
+      const analysisRes = await fetch(`${API_URL}/api/bid-autopsy/analysis/${docId}`, {
+        headers: getAuthHeaders()
+      });
       const analysisData = await analysisRes.json();
 
       setAnalysis(analysisData);

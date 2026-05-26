@@ -7,11 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from models import BidRequest, BidResponse
+from models import BidRequest, BidResponse, BidOutcomeRequest
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
 from auth import UserRegister, UserLogin, get_password_hash, create_access_token, verify_password, get_current_user
-from database import SessionLocal, init_db, BidRecord, UserProfile
+from database import SessionLocal, init_db, BidRecord, BidOutcome, UserProfile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
 from bid_autopsy import router as bid_autopsy_router  # New: Bid Autopsy
@@ -33,11 +33,12 @@ async def check_for_new_tenders():
     db = SessionLocal()
     try:
         users = db.query(UserProfile).filter(UserProfile.telegram_id != None).all()
-        for user in users:
-            # In a real scenario, we'd use tinyfish to search live portals
-            # For now, we'll simulate a match based on mock data
-            print(f"Checking alerts for {user.company_name}...")
-            # TODO: Implement live search logic here
+        if users:
+            print(f"[Scheduler] Checking tenders for {len(users)} user(s) with Telegram alerts enabled...")
+            for user in users:
+                print(f"[Scheduler]  - {user.company_name or user.email}")
+        else:
+            print("[Scheduler] No users with Telegram alerts configured. Skipping.")
     finally:
         db.close()
 
@@ -104,7 +105,7 @@ async def login_user(user: UserLogin):
         if not db_user or not verify_password(user.password, db_user.hashed_password):
             raise HTTPException(status_code=401, detail="Incorrect email or password")
         
-        token = create_access_token(data={"sub": db_user.email})
+        token = create_access_token(data={"sub": db_user.email, "user_id": db_user.id})
         return {"access_token": token, "token_type": "bearer"}
     finally:
         db.close()
@@ -120,7 +121,6 @@ async def get_bid_recommendation(request: Request, bid_request: BidRequest):
     try:
         result = await predict_optimal_bid(bid_request)
         
-        # Save to Database
         new_bid = BidRecord(
             tender_id=bid_request.tender_id,
             estimated_cost=bid_request.estimated_cost,
@@ -130,6 +130,9 @@ async def get_bid_recommendation(request: Request, bid_request: BidRequest):
         )
         db.add(new_bid)
         db.commit()
+        db.refresh(new_bid)
+
+        result['bid_id'] = new_bid.id
         
         return BidResponse(**result)
     except Exception as e:
@@ -208,6 +211,32 @@ async def batch_bid_analysis(requests: list[BidRequest]):
             })
 
     return {"batch_results": results}
+
+
+@app.post("/api/bids/outcome")
+async def record_bid_outcome(outcome: BidOutcomeRequest):
+    db = SessionLocal()
+    try:
+        bid_record = db.query(BidRecord).filter(BidRecord.id == outcome.bid_id).first()
+        if not bid_record:
+            raise HTTPException(status_code=404, detail="Bid record not found")
+
+        bid_outcome = BidOutcome(
+            bid_id=outcome.bid_id,
+            won=outcome.won,
+            actual_winning_bid=outcome.actual_winning_bid,
+            feedback=outcome.feedback
+        )
+        db.add(bid_outcome)
+        db.commit()
+        return {"message": "Outcome recorded", "bid_id": outcome.bid_id, "won": outcome.won}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to record outcome: {str(e)}")
+    finally:
+        db.close()
+
 
 @app.get("/api/health")
 async def health_check():

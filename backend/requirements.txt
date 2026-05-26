@@ -15,6 +15,15 @@ httpx
 passlib[bcrypt]
 bcrypt
 
+# Database
+sqlalchemy
+
+# JWT auth
+python-jose
+
+# PDF parsing (for bid autopsy)
+pypdf
+
 # Optional: For future ML models
 scikit-learn
 pandas
