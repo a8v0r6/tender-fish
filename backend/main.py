@@ -7,11 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from models import BidRequest, BidResponse, BidOutcomeRequest
+from models import BidRequest, BidResponse, BidOutcomeRequest, TenderResponse, SupplierResponse, NegotiateRequest, NegotiateResponse, ApplicationRequest
 from bid_engine import predict_optimal_bid
 from market_research import research_competitor_bids, research_material_costs
 from auth import UserRegister, UserLogin, get_password_hash, create_access_token, verify_password, get_current_user
-from database import SessionLocal, init_db, BidRecord, BidOutcome, UserProfile
+from database import SessionLocal, init_db, BidRecord, BidOutcome, UserProfile, Tender, Supplier, BidApplication
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
 from bid_autopsy import router as bid_autopsy_router  # New: Bid Autopsy
@@ -44,6 +44,46 @@ async def check_for_new_tenders():
 
 scheduler.add_job(check_for_new_tenders, 'interval', hours=6)
 scheduler.start()
+
+# Seed reference data
+def seed_data():
+    db = SessionLocal()
+    try:
+        if db.query(Tender).count() == 0:
+            tenders_data = [
+                {"tender_id": "RJ-901-PWD", "title": "Construction of Multi-Level Parking Facility - Phase II", "department": "PWD, Maharashtra", "value": 124500000, "deadline": "Oct 14, 2025", "category": "Civil", "state": "Maharashtra", "match_score": 94},
+                {"tender_id": "KA-442-MED", "title": "Smart City Data Dashboard & Analytics Platform", "department": "IT Dept, Karnataka", "value": 82000000, "deadline": "Oct 28, 2025", "category": "IT", "state": "Karnataka", "match_score": 78},
+                {"tender_id": "MH-118-WTR", "title": "Solar Rooftop Systems in 50 Districts", "department": "MNRE", "value": 450000000, "deadline": "Nov 05, 2025", "category": "Energy", "state": "Maharashtra", "match_score": 42},
+                {"tender_id": "GJ-334-ROAD", "title": "Highway Widening NH-48 Stretch", "department": "NHAI, Gujarat", "value": 280000000, "deadline": "Nov 20, 2025", "category": "Civil", "state": "Gujarat", "match_score": 87},
+                {"tender_id": "TN-771-HLTH", "title": "Primary Health Centre Equipment Supply", "department": "Health Dept, Tamil Nadu", "value": 35000000, "deadline": "Dec 01, 2025", "category": "Healthcare", "state": "Tamil Nadu", "match_score": 65},
+                {"tender_id": "UP-556-WTR", "title": "Rural Water Supply Scheme - Bundelkhand", "department": "Jal Nigam, Uttar Pradesh", "value": 75000000, "deadline": "Dec 15, 2025", "category": "Civil", "state": "Uttar Pradesh", "match_score": 71},
+                {"tender_id": "WB-223-IT", "title": "E-Governance Portal Redesign", "department": "IT Dept, West Bengal", "value": 18000000, "deadline": "Jan 10, 2026", "category": "IT", "state": "West Bengal", "match_score": 55},
+                {"tender_id": "MP-889-ENERGY", "title": "Solar Microgrid Installation - 50 Villages", "department": "Energy Dept, Madhya Pradesh", "value": 95000000, "deadline": "Jan 25, 2026", "category": "Energy", "state": "Madhya Pradesh", "match_score": 82},
+            ]
+            for t in tenders_data:
+                db.add(Tender(**t))
+            db.commit()
+            print(f"[Seed] Inserted {len(tenders_data)} tenders")
+
+        if db.query(Supplier).count() == 0:
+            suppliers_data = [
+                {"name": "Mahindra Steel Works", "material": "TMT Steel", "price": 58200, "unit": "tonne", "location": "Navi Mumbai", "distance_km": 12.4, "verified": True, "ready_stock": True},
+                {"name": "UltraTech Cement Supply", "material": "OPC Cement", "price": 380, "unit": "bag", "location": "Mumbai", "distance_km": 8.2, "verified": True, "ready_stock": True},
+                {"name": "Bharat Aggregates", "material": "Crushed Stone 20mm", "price": 1650, "unit": "tonne", "location": "Thane", "distance_km": 25.0, "verified": True, "ready_stock": False},
+                {"name": "GreenBuild Materials", "material": "Fly Ash Bricks", "price": 8.5, "unit": "piece", "location": "Pune", "distance_km": 150.0, "verified": False, "ready_stock": True},
+                {"name": "Royal Steel Traders", "material": "TMT Steel", "price": 56100, "unit": "tonne", "location": "Nagpur", "distance_km": 210.0, "verified": True, "ready_stock": False},
+                {"name": "Coastal Cement Depot", "material": "PPC Cement", "price": 350, "unit": "bag", "location": "Panvel", "distance_km": 32.0, "verified": False, "ready_stock": True},
+                {"name": "Sandeep Electricals", "material": "Copper Wire (1mm)", "price": 890, "unit": "kg", "location": "Mumbai", "distance_km": 5.0, "verified": True, "ready_stock": True},
+                {"name": "Pioneer Plywoods", "material": "Commercial Plywood", "price": 95, "unit": "sq ft", "location": "Thane", "distance_km": 18.5, "verified": True, "ready_stock": True},
+            ]
+            for s in suppliers_data:
+                db.add(Supplier(**s))
+            db.commit()
+            print(f"[Seed] Inserted {len(suppliers_data)} suppliers")
+    finally:
+        db.close()
+
+seed_data()
 
 # Rate Limiting
 limiter = Limiter(key_func=get_remote_address)
@@ -234,6 +274,87 @@ async def record_bid_outcome(outcome: BidOutcomeRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to record outcome: {str(e)}")
+    finally:
+        db.close()
+
+
+@app.get("/api/tenders", response_model=list[TenderResponse])
+async def search_tenders(
+    keyword: str = "",
+    category: str = "",
+    state: str = "",
+    min_value: float = 0,
+    max_value: float = 1e12
+):
+    db = SessionLocal()
+    try:
+        query = db.query(Tender)
+        if keyword:
+            query = query.filter(Tender.title.ilike(f"%{keyword}%"))
+        if category:
+            query = query.filter(Tender.category.ilike(f"%{category}%"))
+        if state:
+            query = query.filter(Tender.state.ilike(f"%{state}%"))
+        query = query.filter(Tender.value >= min_value, Tender.value <= max_value)
+        return query.order_by(Tender.match_score.desc()).all()
+    finally:
+        db.close()
+
+
+@app.get("/api/suppliers", response_model=list[SupplierResponse])
+async def search_suppliers(
+    material: str = "",
+    location: str = "",
+    min_price: float = 0,
+    max_price: float = 1e12
+):
+    db = SessionLocal()
+    try:
+        query = db.query(Supplier)
+        if material:
+            query = query.filter(Supplier.material.ilike(f"%{material}%"))
+        if location:
+            query = query.filter(Supplier.location.ilike(f"%{location}%"))
+        query = query.filter(Supplier.price >= min_price, Supplier.price <= max_price)
+        return query.all()
+    finally:
+        db.close()
+
+
+@app.post("/api/suppliers/negotiate", response_model=NegotiateResponse)
+async def negotiate_with_supplier(req: NegotiateRequest):
+    db = SessionLocal()
+    try:
+        supplier = db.query(Supplier).filter(Supplier.id == req.supplier_id).first()
+        if not supplier:
+            raise HTTPException(status_code=404, detail="Supplier not found")
+
+        discount = min(0.12, abs(supplier.price - req.target_price) / supplier.price)
+        counter = round(supplier.price * (1 - discount * 0.5), 2)
+        qty_bonus = " + bulk shipping included" if req.quantity > 100 else ""
+
+        return NegotiateResponse(
+            supplier_name=supplier.name,
+            original_price=supplier.price,
+            counter_offer=counter,
+            message=f"{supplier.name} is willing to negotiate. Counter-offer: ₹{counter:,.2f}/{supplier.unit} for {req.quantity} units{qty_bonus}. Estimated savings: ₹{(supplier.price - counter) * req.quantity:,.0f}."
+        )
+    except HTTPException:
+        raise
+    finally:
+        db.close()
+
+
+@app.post("/api/applications")
+async def submit_application(app: ApplicationRequest):
+    db = SessionLocal()
+    try:
+        record = BidApplication(**app.model_dump())
+        db.add(record)
+        db.commit()
+        return {"message": "Application submitted", "status": app.status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Application failed: {str(e)}")
     finally:
         db.close()
 

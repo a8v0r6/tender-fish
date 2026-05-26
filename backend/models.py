@@ -67,3 +67,52 @@ class BidOutcomeRequest(BaseModel):
     won: bool = Field(..., description="Whether the bid was won")
     actual_winning_bid: Optional[float] = Field(None, description="Actual winning bid amount")
     feedback: Optional[str] = Field(None, description="User feedback on the prediction")
+
+
+class TenderResponse(BaseModel):
+    id: int
+    tender_id: str
+    title: str
+    department: str
+    value: float
+    deadline: str
+    category: str
+    state: str
+    match_score: Optional[int] = 0
+
+
+class SupplierResponse(BaseModel):
+    id: int
+    name: str
+    material: str
+    price: float
+    unit: str
+    location: str
+    distance_km: float
+    verified: bool = False
+    ready_stock: bool = False
+
+
+class NegotiateRequest(BaseModel):
+    supplier_id: int = Field(..., description="Supplier ID")
+    material: str = Field(..., description="Material name")
+    target_price: float = Field(..., description="Target price per unit")
+    quantity: int = Field(..., description="Quantity needed")
+
+
+class NegotiateResponse(BaseModel):
+    supplier_name: str
+    original_price: float
+    counter_offer: Optional[float] = None
+    message: str
+
+
+class ApplicationRequest(BaseModel):
+    company_name: str = Field(..., description="Company name")
+    business_type: str = Field(..., description="Type of business")
+    turnover: Optional[float] = Field(None, description="Annual turnover")
+    tender_id: str = Field(..., description="Target tender ID")
+    contact_email: str = Field(..., description="Contact email")
+    contact_phone: Optional[str] = Field(None, description="Contact phone")
+    gstin: Optional[str] = Field(None, description="GSTIN number")
+    status: str = Field("submitted", description="Application status")

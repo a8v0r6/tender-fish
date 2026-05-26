@@ -1,22 +1,27 @@
 import { Link } from 'react-router-dom';
 
+const formatValue = (v) => {
+  if (typeof v === 'number') return '₹ ' + v.toLocaleString('en-IN');
+  return '₹ ' + v;
+};
+
 const TenderCard = ({ tender, showActions = true }) => (
   <article className="bg-white rounded-2xl border border-outline-variant/20 p-6 hover:shadow-xl transition-all group">
     <div className="flex justify-between items-start mb-4">
       <div>
         <span className="bg-primary/5 text-primary text-[10px] font-black px-3 py-1 rounded-sm border border-primary/10 uppercase tracking-widest">{tender.category}</span>
         <h3 className="text-2xl font-bold text-primary mt-2 group-hover:text-secondary transition-colors">{tender.title}</h3>
-        <p className="text-xs text-outline font-medium mt-1">{tender.dept}</p>
+        <p className="text-xs text-outline font-medium mt-1">{tender.department || tender.dept}</p>
       </div>
       <div className="bg-secondary/5 border border-secondary/20 p-3 rounded-xl text-center">
         <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Match</p>
-        <p className="text-2xl font-black text-secondary">{tender.match}</p>
+        <p className="text-2xl font-black text-secondary">{tender.match_score != null ? `${tender.match_score}%` : tender.match}</p>
       </div>
     </div>
     <div className="grid grid-cols-3 gap-6 py-4 border-y border-outline-variant/10 mb-6">
       <div>
         <p className="text-[9px] font-black text-outline uppercase tracking-widest">Value</p>
-        <p className="text-lg font-bold text-primary">₹ {tender.value}</p>
+        <p className="text-lg font-bold text-primary">{formatValue(tender.value)}</p>
       </div>
       <div>
         <p className="text-[9px] font-black text-outline uppercase tracking-widest">Deadline</p>
@@ -24,7 +29,7 @@ const TenderCard = ({ tender, showActions = true }) => (
       </div>
       <div>
         <p className="text-[9px] font-black text-outline uppercase tracking-widest">Tender ID</p>
-        <p className="text-sm font-bold text-primary">{tender.id}</p>
+        <p className="text-sm font-bold text-primary">{tender.tender_id || tender.id}</p>
       </div>
     </div>
 

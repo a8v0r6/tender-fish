@@ -74,6 +74,50 @@ class BidDocument(Base):
     analysis = relationship("BidAnalysis", back_populates="document", uselist=False)
 
 
+class Tender(Base):
+    __tablename__ = "tenders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tender_id = Column(String, unique=True, index=True)
+    title = Column(String)
+    department = Column(String)
+    value = Column(Float)
+    deadline = Column(String)
+    category = Column(String)
+    state = Column(String)
+    match_score = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Supplier(Base):
+    __tablename__ = "suppliers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    material = Column(String)
+    price = Column(Float)
+    unit = Column(String)
+    location = Column(String)
+    distance_km = Column(Float)
+    verified = Column(Boolean, default=False)
+    ready_stock = Column(Boolean, default=False)
+
+
+class BidApplication(Base):
+    __tablename__ = "bid_applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    company_name = Column(String)
+    business_type = Column(String)
+    turnover = Column(Float, nullable=True)
+    tender_id = Column(String)
+    contact_email = Column(String)
+    contact_phone = Column(String, nullable=True)
+    gstin = Column(String, nullable=True)
+    status = Column(String, default="draft")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class BidAnalysis(Base):
     __tablename__ = "bid_analyses"
 
