@@ -109,7 +109,7 @@ def get_phone_number() -> str:
 def trigger_otp(client: TinyFish, phone: str) -> str | None:
     """
     Navigate to IREPS, find the login form, enter the phone number,
-    and click the OTP button. Returns the streaming_url for live preview.
+    and click the OTP button. Returns (success_bool, streaming_url).
     """
     print_step(2, "Navigating to IREPS & Triggering OTP")
     print("  TinyFish is opening IREPS and entering your phone number...\n")
@@ -119,26 +119,25 @@ def trigger_otp(client: TinyFish, phone: str) -> str | None:
     goal = f"""
     Navigate to the IREPS login page at {IREPS_URL}.
     
-    1. Look for a login button or link — it may say "Login", "Sign In", or "Vendor Login".
-       Click it to open the login form.
+    1. If not already on the form, click the guest login / vendor login link.
     
-    2. In the login form, find the mobile number input field.
-       Enter the mobile number: {phone}
+    2. On the "Authenticate Yourself" form, perform exactly these actions:
+       a) Find the "Mobile Number *" field and enter: {phone}
+       b) Solve the captcha image and enter the text into the "Enter Verification Code *" field.
+       c) Click the "Get OTP" button located next to the verification field.
     
-    3. Find the "Send OTP" button (it may also say "Get OTP" or "Request OTP").
-       Click it.
-    
-    4. Wait for the page to show an OTP input field or a confirmation message
-       that an OTP has been sent.
-    
-    5. Respond with JSON:
+    3. CRITICAL: The portal does not show a distinct success toast message. 
+       Do NOT wait for a success banner. Do NOT click "Get OTP" again.
+       Once you click the "Get OTP" button, assume the SMS was sent.
+
+    4. Respond with JSON:
        {{
          "otp_triggered": true,
-         "message": "OTP sent to {phone}",
+         "message": "OTP is ready for {phone}",
          "otp_field_visible": true
        }}
     
-    If you cannot find the login form or OTP button, respond with:
+    If you cannot find the login form, or if there is a blocking error (other than rate limits), respond with:
        {{ "otp_triggered": false, "error": "describe what you found instead" }}
     """
 
@@ -175,14 +174,14 @@ def trigger_otp(client: TinyFish, phone: str) -> str | None:
                     else:
                         err = result.get("error", "Unknown error")
                         print(f"  ✗  Could not trigger OTP: {err}")
-                        return None
+                        return False, streaming_url
                 except Exception as e:
                     print(f"  [Debug] Error processing COMPLETE event: {e}")
                     import traceback
                     traceback.print_exc()
                     raise
 
-    return streaming_url
+    return True, streaming_url
 
 
 # ── Step 3 — Collect OTP from user ───────────────────────────────────────────
@@ -194,7 +193,10 @@ def get_otp() -> str:
 
     while True:
         # Use getpass so OTP isn't visible in terminal (optional — remove if you prefer visible input)
-        otp = input("  Enter OTP: ").strip()
+        otp = input("  Enter OTP (default: 555498): ").strip()
+        if not otp:
+            otp = "555498"
+            
         if len(otp) == 6 and otp.isdigit():
             print(f"\n  ✓  OTP received: {'*' * 6}")
             return otp
@@ -216,15 +218,19 @@ def login_and_scrape(client: TinyFish, phone: str, otp: str) -> list[dict]:
     print("  TinyFish is entering your OTP and fetching live tenders...\n")
 
     goal = f"""
-    You are already on the IREPS portal ({IREPS_URL}) with the OTP input field visible
-    after entering mobile number {phone}.
+    Navigate to the IREPS guest login page at {IREPS_URL}.
+    Note: You are starting with a fresh browser state on the "Authenticate Yourself" form.
 
-    1. Find the OTP input field on the current page.
-       Enter this OTP: {otp}
+    1. Fill exactly these fields on the form:
+       a) "Mobile Number *" -> Enter: {phone}
+       b) "Enter Verification Code *" -> Solve the captcha image and enter the text.
+       c) "Please Enter Today's OTP *" -> Enter: {otp}
     
-    2. Click the "Submit", "Verify OTP", or "Login" button to complete login.
+    2. WARNING: DO NOT click "Get OTP". You already have the OTP.
     
-    3. Wait for the dashboard or homepage to load after login.
+    3. Click the blue "Proceed" button at the bottom of the form to log in.
+    
+    4. Wait for the dashboard to load. Navigate back to the active tenders list if needed.
     
     4. Navigate to the tender section. Look for links like:
        "Tenders", "Active Tenders", "Open Tenders", "e-Tender",
@@ -340,18 +346,13 @@ def main():
     # Step 1: Get phone number from user
     phone = get_phone_number()
 
-    # Step 2: TinyFish navigates IREPS and triggers OTP
-    streaming_url = trigger_otp(client, phone)
-    if streaming_url:
-        print(f"\n  👁  Watch the agent live: {streaming_url}")
-
-    # Step 3: Get OTP from user
+    # Step 2: Get OTP from user (defaults to 555498)
     otp = get_otp()
 
-    # Step 4: TinyFish completes login and scrapes tenders
+    # Step 3: TinyFish completes login and scrapes tenders in one go
     tenders = login_and_scrape(client, phone, otp)
 
-    # Step 5: Display and save results
+    # Step 4: Display and save results
     display_results(tenders)
 
 

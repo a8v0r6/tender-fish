@@ -15,6 +15,7 @@ from database import SessionLocal, init_db, BidRecord, UserProfile
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from alerts import send_tender_alert
 from bid_autopsy import router as bid_autopsy_router  # New: Bid Autopsy
+from ireps_routes import router as ireps_router
 # from tinyfish import search_tenders  # Ready for live integration
 import uvicorn
 import os
@@ -65,8 +66,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include Bid Autopsy routes
+# Include Application routes
 app.include_router(bid_autopsy_router)
+app.include_router(ireps_router)
 
 @app.get("/")
 async def root():
